@@ -22,7 +22,7 @@ Extracts raw assay data and normalizes it using **Fractional Rank Scoring** ($r_
 
 ### Layer 2: Convergence (Integration)
 The computational heart of the framework.
-* **Robust Rank Aggregation (RRA):** Identifies genes consistently ranked better than chance.
+
 * **Network Propagation:** Random Walk with Restart (RWR) over weighted molecular networks.
 * **Co-Essentiality Proximity:** Maps targets against canonical sterol machinery and lysosomal/mitophagy structural anchors using DepMap data.
 
