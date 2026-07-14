@@ -10,7 +10,7 @@ Standard single-method screens (e.g., isolated CRISPR knockouts or standalone pr
 
 ## Core Philosophy
 1. **No Silent Exclusion:** "Dropouts" and hard cutoffs are removed. Every target maintains a continuous score and an audit trail to the end. "Exclusion" simply means being routed to a deprioritized, documented data bin.
-2. **Convergence as Evidence:** The system rewards targets consistently supported across multiple screens via Robust Rank Aggregation (RRA) and multi-layer network propagation.
+2. **Convergence as Evidence:** The system rewards targets consistently supported across multiple screens.
 3. **Grounded AI:** Large Language Models (LLMs) are used strictly as an advisory annotation layer. LLM agents engage in an adversarial debate (Proposer vs. Skeptic) to generate mechanistic hypotheses, but all factual claims must be cited against explicit database identifiers (e.g., DepMap, BioGRID, PubMed).
 
 ## System Architecture
