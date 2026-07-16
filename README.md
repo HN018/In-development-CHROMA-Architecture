@@ -1,38 +1,45 @@
 # CHROMA
-**Cholesterol Homeostasis Regulator discovery via Orchestrated Multi-method Analysis**
+### Cholesterol Homeostasis Regulator discovery via Orchestrated Multi-method Analysis
 
-*Status: Active Development / Architecture Phase*
+A self-initiated design study in **multi-omics data integration** for target discovery — and, as much as anything, a worked example of *stress-testing a computational design against real data and revising it when the evidence demands it.*
 
-## Overview
-CHROMA is an in-development 5-layer multi-agent computational framework designed to surface novel metabolic and organelle regulators. 
+> **Status: architecture + design docs (in development).** This repository is a system design, not a deployed discovery pipeline. It documents both the intended architecture and — importantly — what changed when the design met real datasets.
 
-Standard single-method screens (e.g., isolated CRISPR knockouts or standalone proteomics) frequently discard critical, sub-threshold biological targets due to rigid statistical cutoffs. CHROMA solves this "silent exclusion" problem by integrating heterogeneous datasets-CRISPR KO screens, RNA-seq, and proteomics-into a unified pipeline. It identifies genes that are consistently supported across orthogonal screens, even if they are statistically weak in any single assay, to discover truly novel regulators of cholesterol homeostasis and lysosomal integrity.
+---
 
-## Core Philosophy
-1. **No Silent Exclusion:** "Dropouts" and hard cutoffs are removed. Every target maintains a continuous score and an audit trail to the end. "Exclusion" simply means being routed to a deprioritized, documented data bin.
-2. **Convergence as Evidence:** The system rewards targets consistently supported across multiple screens.
-3. **Grounded AI:** Large Language Models (LLMs) are used strictly as an advisory annotation layer. LLM agents engage in an adversarial debate (Proposer vs. Skeptic) to generate mechanistic hypotheses, but all factual claims must be cited against explicit database identifiers (e.g., DepMap, BioGRID, PubMed).
+## The problem
 
-## System Architecture
+Pooled CRISPR screens, proteomics, and transcriptomics each carry partial, noisy evidence about which genes regulate plasma-membrane cholesterol. No single dataset is decisive. The original idea behind CHROMA was to integrate several such datasets so that genes supported across independent lines of evidence rise to the top — with a deterministic, reproducible core and a large-language-model layer confined to *hypothesis generation and annotation only*, never to selecting or excluding genes.
 
-CHROMA operates across 5 deterministic and advisory layers:
+## Intended architecture (5 layers)
 
-### Layer 1: Evidence (Data Normalization)
-Extracts raw assay data and normalizes it using **Fractional Rank Scoring** ($r_i/N_i$) via `pandas`. This resolves statistical skews between massive transcriptomic lists and smaller, high-dropout proteomic datasets without deleting missing proteins.
+| 1 — Normalization | Harmonize heterogeneous score types into comparable, provenance-tagged ranks without silently dropping genes tested in only one modality | Designed |
+| 2 — Integration | Combine ranked evidence across modalities into a single prioritization | Redesigned (see below) |
+| 3 — Network context | Propagate support across a protein-interaction graph so genes linked to strong hits gain weight | Designed |
+| 4 — Grounded LLM annotation | Advisory only: annotate uncharacterized ("orphan") candidates against existing literature; **no gene selection or exclusion** | Designed |
+| 5 — Prioritization & reporting | Produce a ranked, evidence-attributed shortlist for experimental follow-up | Designed |
 
-### Layer 2: Convergence (Integration)
-The computational heart of the framework.
+## What changed, and why
 
-* **Network Propagation:** Random Walk with Restart (RWR) over weighted molecular networks.
-* **Co-Essentiality Proximity:** Maps targets against canonical sterol machinery and lysosomal/mitophagy structural anchors using DepMap data.
+The original design assumed the available datasets were **replicated screens measuring the same thing**, so that convergence across them would be meaningful. A systematic audit of the actual datasets showed that assumption did not hold:
 
-### Layer 3: Prioritization
-Scores candidates using a Positive-Unlabeled (PU) classifier. Progress is validated strictly via Leave-one-pathway-out (LOPO) testing to ensure the model discovers novel biology rather than interpolating known gene clusters.
+- Only one dataset qualified as a genuinely replicated functional-genomics screen.
+- The transcriptomic datasets measure the cell's **response** to cholesterol perturbation (e.g. SREBP2 feedback targets), not the **regulators** of cholesterol — so aggregating them would have produced strong, statistically clean convergence on the *wrong* class of genes, while passing every acceptance check.
 
-### Layer 4: Annotation (LLM Adversarial Debate)
-A multi-agent AI layer featuring a **Triage Filter** to optimize API costs and prevent hallucination. 
-* Highly canonical targets bypass the debate. 
-* Novel and orphan targets trigger a 3-round debate between a **Proposer** (arguing biological relevance) and a **Skeptic** (querying databases for artifact/essentiality risks), moderated by an **Orchestrator**. 
+That is the dangerous failure mode: not a pipeline that breaks, but one that **succeeds convincingly at the wrong task.** The response to that was to stop, and redesign the integration around **distinguishing regulators from downstream responders** — treating response signatures as a *filter to remove false positives* rather than as positive evidence.
 
-### Layer 5: Triage & Output
-Outputs highly structured candidate dossiers routed into distinct biological bins (e.g., *Convergent-Novel*, *Orphan/Essential*, *Convergent-Canonical*).
+This is the part of the project I consider most valuable: the design is only as trustworthy as the data feeding it, and recognizing when it isn't is the actual work.
+
+## Design principles
+
+- **Deterministic core, advisory LLM.** Every gene-level decision is made by reproducible, inspectable computation. The LLM annotates and proposes; it never selects or excludes.
+- **No silent exclusion.** Genes measured in only some datasets are handled explicitly, not dropped without trace.
+- **Provenance-aware.** Every score carries where it came from, so integration never blends incomparable evidence unknowingly.
+- **Benchmark ≠ discovery.** Method behavior is validated on controlled benchmarks separately from any real-data discovery claim.
+
+## What this repository is (and isn't)
+
+- **Is:** a documented architecture, the design rationale, and an honest record of a design-vs-data course correction.
+- **Isn't:** a validated system that has discovered novel regulators. It hasn't — the available data could not yet support that claim, which is itself the finding that drove the redesign.
+
+
